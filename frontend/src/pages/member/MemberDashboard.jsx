@@ -7,6 +7,7 @@ import LoadingSpinner from '../../components/LoadingSpinner.jsx';
 import Modal from '../../components/Modal.jsx';
 import { Button } from '../../components/FormField.jsx';
 import { paymentStatusLabel } from '../../utils/paymentStatus.js';
+import ProgressPhotos from '../../components/ProgressPhotos.jsx';
 
 export default function MemberDashboard() {
   const { profile } = useAuth();
@@ -76,6 +77,18 @@ export default function MemberDashboard() {
 
       <div className="mt-6">
         <Button variant="secondary" onClick={showQr}>Show My Check-in QR Code</Button>
+      </div>
+
+      <div className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <ProgressPhotos
+          listUrl="/member/progress-photos"
+          uploadUrl="/member/progress-photos"
+          deleteUrl={(id) => `/member/progress-photos/${id}`}
+          downloadUrlFor={(id) => `/member/progress-photos/${id}/download-url`}
+          canUpload
+          canDelete
+          canDownload
+        />
       </div>
 
       <Modal open={qrOpen} onClose={() => setQrOpen(false)} title="My QR Code" size="sm">

@@ -45,6 +45,10 @@ do $$ begin
   create type announcement_status as enum ('published', 'draft');
 exception when duplicate_object then null; end $$;
 
+do $$ begin
+  create type progress_photo_type as enum ('before', 'progress', 'after');
+exception when duplicate_object then null; end $$;
+
 -- ----------------------------------------------------------------------------
 -- Helper: updated_at trigger
 -- ----------------------------------------------------------------------------
@@ -253,6 +257,44 @@ create table if not exists activity_logs (
 create index if not exists idx_activity_logs_gym_id on activity_logs(gym_id);
 create index if not exists idx_activity_logs_created_at on activity_logs(created_at desc);
 
+-- ----------------------------------------------------------------------------
+-- progress_photos (member body progress photos — only the metadata/path
+-- lives here; the actual image bytes live in Supabase Storage, bucket
+-- "progress-photos", never as base64 in Postgres)
+-- ----------------------------------------------------------------------------
+create table if not exists progress_photos (
+  id uuid primary key default gen_random_uuid(),
+  gym_id uuid not null references gyms(id) on delete cascade,
+  member_id uuid not null references members(id) on delete cascade,
+  storage_path text not null,
+  photo_type progress_photo_type not null,
+  taken_date date not null default current_date,
+  note text,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_progress_photos_gym_id on progress_photos(gym_id);
+create index if not exists idx_progress_photos_member_id on progress_photos(member_id);
+
+-- ----------------------------------------------------------------------------
+-- Supabase Storage bucket for progress photos.
+--
+-- Private (not public) — nobody can read an object just by guessing/knowing
+-- its path. All access (upload, view, download, delete) goes through the
+-- Express API using the service role key, same as every other table; the
+-- backend only ever hands out short-lived SIGNED urls after checking the
+-- requester actually owns the photo (or is that gym's admin/staff).
+-- ----------------------------------------------------------------------------
+insert into storage.buckets (id, name, public)
+values ('progress-photos', 'progress-photos', false)
+on conflict (id) do nothing;
+
+drop policy if exists deny_all_anon_progress_photos on storage.objects;
+create policy deny_all_anon_progress_photos on storage.objects
+  for all to anon, authenticated
+  using (bucket_id = 'progress-photos' and false)
+  with check (bucket_id = 'progress-photos' and false);
+
 -- ============================================================================
 -- Row Level Security
 --
@@ -270,7 +312,7 @@ declare
 begin
   for t in select unnest(array[
     'gyms','users','membership_plans','members','subscriptions',
-    'payments','attendance','announcements','activity_logs'
+    'payments','attendance','announcements','activity_logs','progress_photos'
   ]) loop
     execute format('alter table %I enable row level security', t);
     execute format('drop policy if exists deny_all_anon on %I', t);

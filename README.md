@@ -32,6 +32,13 @@ data is fully isolated by `gym_id`.
 - **Reports** — total/active/expired members, today's attendance, daily &
   monthly income, staff activity summary. Intentionally simple — this is
   not an accounting system.
+- **Progress Photos** — members upload their own Before / Progress / After
+  body photos (from phone or computer), see a chronological gallery, and
+  compare any two side by side. Images live in Supabase Storage (a private
+  bucket, never base64 in Postgres) and are only ever served as short-lived
+  signed URLs after the backend confirms the requester owns the photo. A
+  Gym Admin can view (not edit) a member's photos from that member's
+  profile — never another gym's.
 
 ## Tech Stack
 

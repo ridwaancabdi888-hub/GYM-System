@@ -7,6 +7,7 @@ import { generateMemberCode } from '../services/memberCode.js';
 import { generateMemberQrDataUrl } from '../services/qrcode.js';
 import { syncExpiredMembers } from '../services/memberMaintenance.js';
 import { computeMemberStatus } from '../utils/memberStatus.js';
+import { getSignedViewUrls } from '../services/progressPhotoStorage.js';
 
 export const listMembers = asyncHandler(async (req, res) => {
   await syncExpiredMembers(req.gymId);
@@ -215,4 +216,24 @@ export const setMemberPassword = asyncHandler(async (req, res) => {
   });
 
   res.json({ username: member.member_code, password: req.body.newPassword });
+});
+
+// Read-only, gym-scoped view of a member's progress photos for the Gym
+// Admin/staff — never a photo belonging to another gym's member.
+export const listMemberProgressPhotos = asyncHandler(async (req, res) => {
+  const { data: member } = await supabase.from('members').select('id').eq('id', req.params.id).eq('gym_id', req.gymId).maybeSingle();
+  if (!member) return res.status(404).json({ error: 'Member not found' });
+
+  const { data, error } = await supabase
+    .from('progress_photos')
+    .select('*')
+    .eq('member_id', req.params.id)
+    .eq('gym_id', req.gymId)
+    .order('taken_date', { ascending: true })
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+
+  const urlByPath = await getSignedViewUrls(data.map((p) => p.storage_path));
+  const photos = data.map((p) => ({ ...p, url: urlByPath[p.storage_path] || null }));
+  res.json({ photos });
 });

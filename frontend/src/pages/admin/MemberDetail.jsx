@@ -6,6 +6,7 @@ import Badge from '../../components/Badge.jsx';
 import LoadingSpinner from '../../components/LoadingSpinner.jsx';
 import Modal from '../../components/Modal.jsx';
 import MemberLoginDetails from '../../components/MemberLoginDetails.jsx';
+import ProgressPhotos from '../../components/ProgressPhotos.jsx';
 import { Button, FormField, Input, Select } from '../../components/FormField.jsx';
 import { paymentStatusLabel } from '../../utils/paymentStatus.js';
 
@@ -196,6 +197,10 @@ export default function MemberDetail() {
             </table>
           </div>
         )}
+      </div>
+
+      <div className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <ProgressPhotos listUrl={`/members/${id}/progress-photos`} />
       </div>
 
       <Modal open={qrOpen} onClose={() => setQrOpen(false)} title="Member QR Code" size="sm">

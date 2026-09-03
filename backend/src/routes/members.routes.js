@@ -9,6 +9,7 @@ import {
   getMemberQr,
   getMemberCredentials,
   setMemberPassword,
+  listMemberProgressPhotos,
 } from '../controllers/members.controller.js';
 
 const router = Router();
@@ -19,6 +20,7 @@ router.get('/', listMembers);
 router.get('/:id', getMember);
 router.get('/:id/qr', getMemberQr);
 router.get('/:id/credentials', getMemberCredentials);
+router.get('/:id/progress-photos', listMemberProgressPhotos);
 router.post('/', createMember);
 router.patch('/:id', updateMember);
 router.patch('/:id/status', setMemberStatus);
