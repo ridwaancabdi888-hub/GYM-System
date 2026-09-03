@@ -2,8 +2,19 @@ import { supabase } from '../config/supabase.js';
 import { requireFields, ValidationError } from '../utils/validate.js';
 import { asyncHandler } from '../middleware/asyncHandler.js';
 import { logActivity } from '../services/activityLogger.js';
+import { listLatestSubscriptionsWithStatus } from '../services/subscriptionStatus.js';
 
 const METHODS = ['cash', 'zaad', 'edahab', 'other'];
+
+// One row per member: their current membership cycle's amount due, amount
+// paid, balance, and automatically computed status (Pending / Unpaid /
+// Partially Paid / Paid). Lives under /payments (not /subscriptions) so
+// staff who only have the "payments" permission — e.g. a Cashier — can see
+// it without needing the broader "members" permission.
+export const listMembershipStatus = asyncHandler(async (req, res) => {
+  const subscriptions = await listLatestSubscriptionsWithStatus(req.gymId);
+  res.json({ subscriptions });
+});
 
 // Lightweight member lookup so staff who only have the "payments" permission
 // (e.g. a Cashier) can find a member to charge without needing the broader
@@ -56,12 +67,28 @@ export const createPayment = asyncHandler(async (req, res) => {
   const { data: member } = await supabase.from('members').select('id, full_name').eq('id', memberId).eq('gym_id', req.gymId).maybeSingle();
   if (!member) throw new ValidationError('Member not found in this gym');
 
+  // A payment counts toward a membership cycle's balance, so unless the
+  // caller names one explicitly, attribute it to the member's current
+  // (most recently created) subscription.
+  let resolvedSubscriptionId = subscriptionId || null;
+  if (!resolvedSubscriptionId) {
+    const { data: latestSub } = await supabase
+      .from('subscriptions')
+      .select('id')
+      .eq('member_id', memberId)
+      .eq('gym_id', req.gymId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    resolvedSubscriptionId = latestSub?.id || null;
+  }
+
   const { data: payment, error } = await supabase
     .from('payments')
     .insert({
       gym_id: req.gymId,
       member_id: memberId,
-      subscription_id: subscriptionId || null,
+      subscription_id: resolvedSubscriptionId,
       amount,
       method,
       payment_date: paymentDate || new Date().toISOString().slice(0, 10),

@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react';
 import api, { apiErrorMessage } from '../../services/api.js';
 import { useToast } from '../../components/Toast.jsx';
 import DataTable from '../../components/DataTable.jsx';
+import Badge from '../../components/Badge.jsx';
 import Modal from '../../components/Modal.jsx';
 import { Button, FormField, Input, Select } from '../../components/FormField.jsx';
+import { paymentStatusLabel } from '../../utils/paymentStatus.js';
 
 const METHODS = [
   { value: 'cash', label: 'Cash' },
@@ -16,6 +18,8 @@ export default function Payments() {
   const toast = useToast();
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [membershipStatus, setMembershipStatus] = useState([]);
+  const [statusLoading, setStatusLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [memberSearch, setMemberSearch] = useState('');
   const [memberOptions, setMemberOptions] = useState([]);
@@ -38,8 +42,21 @@ export default function Payments() {
     }
   }
 
+  async function loadMembershipStatus() {
+    setStatusLoading(true);
+    try {
+      const { data } = await api.get('/payments/membership-status');
+      setMembershipStatus(data.subscriptions);
+    } catch (err) {
+      toast.error(apiErrorMessage(err));
+    } finally {
+      setStatusLoading(false);
+    }
+  }
+
   useEffect(() => {
     load();
+    loadMembershipStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -73,6 +90,7 @@ export default function Payments() {
       toast.success('Payment recorded');
       closeModal();
       load();
+      loadMembershipStatus();
       openReceipt(data.payment.id);
     } catch (err) {
       toast.error(apiErrorMessage(err));
@@ -100,6 +118,28 @@ export default function Payments() {
         <Button onClick={() => setModalOpen(true)}>+ Record Payment</Button>
       </div>
 
+      <h2 className="mb-3 text-sm font-semibold text-slate-800">Membership Payment Status</h2>
+      <p className="mb-3 text-xs text-slate-500">
+        Calculated automatically from each member's current membership balance and due date — nothing here is set by hand.
+      </p>
+      <div className="mb-8">
+        <DataTable
+          loading={statusLoading}
+          rows={membershipStatus}
+          emptyTitle="No memberships yet"
+          columns={[
+            { key: 'member', header: 'Member', render: (s) => `${s.members?.full_name} (${s.members?.member_code})` },
+            { key: 'plan', header: 'Plan', render: (s) => s.membership_plans?.name || '—' },
+            { key: 'amount_due', header: 'Amount Due', render: (s) => `$${Number(s.amount_due).toFixed(2)}` },
+            { key: 'amountPaid', header: 'Paid', render: (s) => `$${Number(s.amountPaid).toFixed(2)}` },
+            { key: 'balance', header: 'Balance', render: (s) => `$${Number(s.balance).toFixed(2)}` },
+            { key: 'end_date', header: 'Due Date', render: (s) => new Date(s.end_date).toLocaleDateString() },
+            { key: 'paymentStatus', header: 'Status', render: (s) => <Badge tone={s.paymentStatus}>{paymentStatusLabel(s.paymentStatus)}</Badge> },
+          ]}
+        />
+      </div>
+
+      <h2 className="mb-3 text-sm font-semibold text-slate-800">Payment History</h2>
       <DataTable
         loading={loading}
         rows={payments}

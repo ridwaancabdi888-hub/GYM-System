@@ -58,9 +58,11 @@ export const createMember = asyncHandler(async (req, res) => {
 
   let startDate = null;
   let expiryDate = null;
+  let plan = null;
   if (membershipPlanId) {
-    const { data: plan } = await supabase.from('membership_plans').select('duration_days').eq('id', membershipPlanId).eq('gym_id', req.gymId).maybeSingle();
-    if (!plan) throw new ValidationError('membershipPlanId is not valid for this gym');
+    const { data: planRow } = await supabase.from('membership_plans').select('duration_days, price').eq('id', membershipPlanId).eq('gym_id', req.gymId).maybeSingle();
+    if (!planRow) throw new ValidationError('membershipPlanId is not valid for this gym');
+    plan = planRow;
     startDate = new Date().toISOString().slice(0, 10);
     const expiry = new Date();
     expiry.setDate(expiry.getDate() + plan.duration_days);
@@ -96,6 +98,7 @@ export const createMember = asyncHandler(async (req, res) => {
       plan_id: membershipPlanId,
       start_date: startDate,
       end_date: expiryDate,
+      amount_due: plan.price,
       status: 'active',
     });
   }

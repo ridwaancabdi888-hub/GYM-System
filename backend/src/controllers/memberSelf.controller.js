@@ -2,6 +2,7 @@ import { supabase } from '../config/supabase.js';
 import { asyncHandler } from '../middleware/asyncHandler.js';
 import { generateMemberQrDataUrl } from '../services/qrcode.js';
 import { syncExpiredMembers } from '../services/memberMaintenance.js';
+import { attachPaymentStatus } from '../services/subscriptionStatus.js';
 
 export const myProfile = asyncHandler(async (req, res) => {
   await syncExpiredMembers(req.auth.gymId);
@@ -48,6 +49,24 @@ export const myAnnouncements = asyncHandler(async (req, res) => {
     .order('created_at', { ascending: false });
   if (error) throw error;
   res.json({ announcements: data });
+});
+
+// The member's current membership cycle: amount due, amount paid, balance,
+// and the automatically computed status (Pending / Unpaid / Partially
+// Paid / Paid) — same computation the Gym Admin sees on the Payments page.
+export const mySubscription = asyncHandler(async (req, res) => {
+  const { data, error } = await supabase
+    .from('subscriptions')
+    .select('*, membership_plans(name)')
+    .eq('member_id', req.auth.id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return res.json({ subscription: null });
+
+  const [withStatus] = await attachPaymentStatus([data]);
+  res.json({ subscription: withStatus });
 });
 
 export const myQr = asyncHandler(async (req, res) => {

@@ -7,6 +7,7 @@ import LoadingSpinner from '../../components/LoadingSpinner.jsx';
 import Modal from '../../components/Modal.jsx';
 import MemberLoginDetails from '../../components/MemberLoginDetails.jsx';
 import { Button, FormField, Input, Select } from '../../components/FormField.jsx';
+import { paymentStatusLabel } from '../../utils/paymentStatus.js';
 
 export default function MemberDetail() {
   const { id } = useParams();
@@ -14,6 +15,7 @@ export default function MemberDetail() {
   const [member, setMember] = useState(null);
   const [plans, setPlans] = useState([]);
   const [payments, setPayments] = useState([]);
+  const [currentSubscription, setCurrentSubscription] = useState(null);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -26,15 +28,17 @@ export default function MemberDetail() {
   async function load() {
     setLoading(true);
     try {
-      const [memberRes, plansRes, paymentsRes] = await Promise.all([
+      const [memberRes, plansRes, paymentsRes, subsRes] = await Promise.all([
         api.get(`/members/${id}`),
         api.get('/plans'),
         api.get('/payments', { params: { memberId: id } }),
+        api.get('/subscriptions', { params: { memberId: id } }),
       ]);
       setMember(memberRes.data.member);
       setForm({ fullName: memberRes.data.member.full_name, phone: memberRes.data.member.phone || '', gender: memberRes.data.member.gender || 'male' });
       setPlans(plansRes.data.plans);
       setPayments(paymentsRes.data.payments);
+      setCurrentSubscription(subsRes.data.subscriptions[0] || null);
     } catch (err) {
       toast.error(apiErrorMessage(err));
     } finally {
@@ -141,8 +145,28 @@ export default function MemberDetail() {
           <p className="mb-3 font-medium text-slate-900">{member.membership_plans?.name || '—'}</p>
           <p className="text-slate-500">Start date</p>
           <p className="mb-3 font-medium text-slate-900">{member.start_date ? new Date(member.start_date).toLocaleDateString() : '—'}</p>
-          <p className="text-slate-500">Expiry date</p>
-          <p className="font-medium text-slate-900">{member.expiry_date ? new Date(member.expiry_date).toLocaleDateString() : '—'}</p>
+          <p className="text-slate-500">Expiry / Due date</p>
+          <p className="mb-3 font-medium text-slate-900">{member.expiry_date ? new Date(member.expiry_date).toLocaleDateString() : '—'}</p>
+          {currentSubscription && (
+            <>
+              <div className="mb-3 grid grid-cols-3 gap-2 text-sm">
+                <div>
+                  <p className="text-slate-500">Due</p>
+                  <p className="font-medium text-slate-900">${Number(currentSubscription.amount_due).toFixed(2)}</p>
+                </div>
+                <div>
+                  <p className="text-slate-500">Paid</p>
+                  <p className="font-medium text-slate-900">${Number(currentSubscription.amountPaid).toFixed(2)}</p>
+                </div>
+                <div>
+                  <p className="text-slate-500">Balance</p>
+                  <p className="font-medium text-slate-900">${Number(currentSubscription.balance).toFixed(2)}</p>
+                </div>
+              </div>
+              <p className="text-slate-500">Payment Status</p>
+              <Badge tone={currentSubscription.paymentStatus}>{paymentStatusLabel(currentSubscription.paymentStatus)}</Badge>
+            </>
+          )}
         </div>
       </div>
 

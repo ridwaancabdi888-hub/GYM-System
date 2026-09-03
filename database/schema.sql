@@ -170,6 +170,9 @@ create table if not exists subscriptions (
   plan_id uuid not null references membership_plans(id),
   start_date date not null,
   end_date date not null,
+  -- Snapshot of the plan's price when this subscription was created, so a
+  -- later price change on the plan never rewrites what a past cycle owed.
+  amount_due numeric(10,2) not null default 0,
   status sub_status not null default 'active',
   created_at timestamptz not null default now()
 );

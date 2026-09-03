@@ -71,23 +71,27 @@ begin
   values (gen_random_uuid(), gym_a, 'M004', 'Hodan Abdi', '+252611100004', 'female', current_date - 5, plan_a_monthly, current_date - 5, current_date + 25, 'active', v_member_hash)
   returning id into m_a4;
 
-  insert into subscriptions (id, gym_id, member_id, plan_id, start_date, end_date, status)
-  values (gen_random_uuid(), gym_a, m_a1, plan_a_monthly, current_date - 10, current_date + 20, 'active') returning id into sub_id;
+  -- Fully paid, still within its period -> Paid
+  insert into subscriptions (id, gym_id, member_id, plan_id, start_date, end_date, amount_due, status)
+  values (gen_random_uuid(), gym_a, m_a1, plan_a_monthly, current_date - 10, current_date + 20, 25.00, 'active') returning id into sub_id;
   insert into payments (gym_id, member_id, subscription_id, amount, payment_date, method, received_by, notes)
   values (gym_a, m_a1, sub_id, 25.00, current_date - 10, 'cash', staff_a2, 'Monthly renewal');
 
-  insert into subscriptions (id, gym_id, member_id, plan_id, start_date, end_date, status)
-  values (gen_random_uuid(), gym_a, m_a2, plan_a_yearly, current_date - 40, current_date + 325, 'active') returning id into sub_id;
+  -- Fully paid yearly plan -> Paid
+  insert into subscriptions (id, gym_id, member_id, plan_id, start_date, end_date, amount_due, status)
+  values (gen_random_uuid(), gym_a, m_a2, plan_a_yearly, current_date - 40, current_date + 325, 240.00, 'active') returning id into sub_id;
   insert into payments (gym_id, member_id, subscription_id, amount, payment_date, method, received_by, notes)
   values (gym_a, m_a2, sub_id, 240.00, current_date - 40, 'zaad', staff_a2, 'Yearly plan');
 
-  insert into subscriptions (id, gym_id, member_id, plan_id, start_date, end_date, status)
-  values (gen_random_uuid(), gym_a, m_a3, plan_a_monthly, current_date - 35, current_date - 5, 'expired');
+  -- Expired with nothing paid -> Unpaid
+  insert into subscriptions (id, gym_id, member_id, plan_id, start_date, end_date, amount_due, status)
+  values (gen_random_uuid(), gym_a, m_a3, plan_a_monthly, current_date - 35, current_date - 5, 25.00, 'expired');
 
-  insert into subscriptions (id, gym_id, member_id, plan_id, start_date, end_date, status)
-  values (gen_random_uuid(), gym_a, m_a4, plan_a_monthly, current_date - 5, current_date + 25, 'active') returning id into sub_id;
+  -- Still within its period, only part paid -> Partially Paid
+  insert into subscriptions (id, gym_id, member_id, plan_id, start_date, end_date, amount_due, status)
+  values (gen_random_uuid(), gym_a, m_a4, plan_a_monthly, current_date - 5, current_date + 25, 25.00, 'active') returning id into sub_id;
   insert into payments (gym_id, member_id, subscription_id, amount, payment_date, method, received_by, notes)
-  values (gym_a, m_a4, sub_id, 25.00, current_date - 5, 'edahab', staff_a2, 'New member sign-up');
+  values (gym_a, m_a4, sub_id, 15.00, current_date - 5, 'edahab', staff_a2, 'Partial payment on sign-up');
 
   insert into attendance (gym_id, member_id, check_in_date, check_in_time, recorded_by) values
     (gym_a, m_a1, current_date, '08:15', staff_a1),
@@ -130,18 +134,19 @@ begin
   values (gen_random_uuid(), gym_b, 'M003', 'Zahra Said', '+252611200003', 'female', current_date - 50, plan_b_monthly, current_date - 20, current_date - 3, 'expired', v_member_hash)
   returning id into m_b3;
 
-  insert into subscriptions (id, gym_id, member_id, plan_id, start_date, end_date, status)
-  values (gen_random_uuid(), gym_b, m_b1, plan_b_monthly, current_date - 20, current_date + 10, 'active') returning id into sub_id;
+  -- Fully paid -> Paid
+  insert into subscriptions (id, gym_id, member_id, plan_id, start_date, end_date, amount_due, status)
+  values (gen_random_uuid(), gym_b, m_b1, plan_b_monthly, current_date - 20, current_date + 10, 20.00, 'active') returning id into sub_id;
   insert into payments (gym_id, member_id, subscription_id, amount, payment_date, method, received_by, notes)
   values (gym_b, m_b1, sub_id, 20.00, current_date - 20, 'cash', staff_b1, null);
 
-  insert into subscriptions (id, gym_id, member_id, plan_id, start_date, end_date, status)
-  values (gen_random_uuid(), gym_b, m_b2, plan_b_monthly, current_date - 3, current_date + 27, 'active') returning id into sub_id;
-  insert into payments (gym_id, member_id, subscription_id, amount, payment_date, method, received_by, notes)
-  values (gym_b, m_b2, sub_id, 20.00, current_date - 3, 'other', staff_b1, 'Bank transfer');
+  -- Still within its period, nothing paid yet -> Pending
+  insert into subscriptions (id, gym_id, member_id, plan_id, start_date, end_date, amount_due, status)
+  values (gen_random_uuid(), gym_b, m_b2, plan_b_monthly, current_date - 3, current_date + 27, 20.00, 'active');
 
-  insert into subscriptions (id, gym_id, member_id, plan_id, start_date, end_date, status)
-  values (gen_random_uuid(), gym_b, m_b3, plan_b_monthly, current_date - 20, current_date - 3, 'expired');
+  -- Expired with nothing paid -> Unpaid
+  insert into subscriptions (id, gym_id, member_id, plan_id, start_date, end_date, amount_due, status)
+  values (gen_random_uuid(), gym_b, m_b3, plan_b_monthly, current_date - 20, current_date - 3, 20.00, 'expired');
 
   insert into attendance (gym_id, member_id, check_in_date, check_in_time, recorded_by) values
     (gym_b, m_b1, current_date, '07:45', staff_b1),

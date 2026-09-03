@@ -24,7 +24,11 @@ data is fully isolated by `gym_id`.
 - **Attendance** — check in by search or by scanning a member's QR code;
   warns staff if a membership has expired.
 - **Payments** — cash / ZAAD / eDahab / other, with a simple printable
-  receipt.
+  receipt. Each membership cycle's payment status (**Pending** /
+  **Unpaid** / **Partially Paid** / **Paid**) is calculated automatically
+  from its balance and due date — never set by hand — and shown
+  consistently on both the Gym Admin's Payments page and the member's own
+  dashboard.
 - **Reports** — total/active/expired members, today's attendance, daily &
   monthly income, staff activity summary. Intentionally simple — this is
   not an accounting system.
