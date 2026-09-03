@@ -9,7 +9,6 @@ import {
   getMemberQr,
   getMemberCredentials,
   setMemberPassword,
-  resetMemberPassword,
 } from '../controllers/members.controller.js';
 
 const router = Router();
@@ -24,6 +23,5 @@ router.post('/', createMember);
 router.patch('/:id', updateMember);
 router.patch('/:id/status', setMemberStatus);
 router.post('/:id/set-password', setMemberPassword);
-router.post('/:id/reset-password', resetMemberPassword);
 
 export default router;

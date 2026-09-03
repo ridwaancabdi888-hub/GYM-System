@@ -4,6 +4,39 @@ import { signToken } from '../utils/jwt.js';
 import { requireFields, ValidationError } from '../utils/validate.js';
 import { asyncHandler } from '../middleware/asyncHandler.js';
 
+async function getGymName(gymId) {
+  if (!gymId) return null;
+  const { data } = await supabase.from('gyms').select('name').eq('id', gymId).maybeSingle();
+  return data?.name || null;
+}
+
+// Builds the camelCase profile shape sent to the frontend for both
+// /auth/login and /auth/me, so a page refresh (which re-fetches via /me)
+// never produces a differently-shaped profile than a fresh login did.
+function buildUserProfile(user, gymName) {
+  return {
+    id: user.id,
+    role: user.role,
+    fullName: user.full_name,
+    email: user.email,
+    gymId: user.gym_id,
+    gymName,
+    permissions: user.permissions || {},
+    title: user.title,
+  };
+}
+
+function buildMemberProfile(member, gymName) {
+  return {
+    id: member.id,
+    role: 'member',
+    fullName: member.full_name,
+    gymId: member.gym_id,
+    gymName,
+    memberCode: member.member_code,
+  };
+}
+
 export const login = asyncHandler(async (req, res) => {
   requireFields(req.body, ['identifier', 'password']);
   const rawIdentifier = String(req.body.identifier).trim();
@@ -31,18 +64,8 @@ export const login = asyncHandler(async (req, res) => {
       permissions: user.permissions || {},
     });
 
-    return res.json({
-      token,
-      profile: {
-        id: user.id,
-        role: user.role,
-        fullName: user.full_name,
-        email: user.email,
-        gymId: user.gym_id,
-        permissions: user.permissions || {},
-        title: user.title,
-      },
-    });
+    const gymName = await getGymName(user.gym_id);
+    return res.json({ token, profile: buildUserProfile(user, gymName) });
   }
 
   // Fall back to member login, by Member ID (member_code, e.g. "M001").
@@ -70,29 +93,22 @@ export const login = asyncHandler(async (req, res) => {
       gymId: member.gym_id,
     });
 
-    return res.json({
-      token,
-      profile: {
-        id: member.id,
-        role: 'member',
-        fullName: member.full_name,
-        gymId: member.gym_id,
-        memberCode: member.member_code,
-      },
-    });
+    const gymName = await getGymName(member.gym_id);
+    return res.json({ token, profile: buildMemberProfile(member, gymName) });
   }
 
   return res.status(401).json({ error: 'Invalid email/Member ID or password' });
 });
 
 export const me = asyncHandler(async (req, res) => {
-  const { subjectType, id } = req.auth;
+  const { subjectType, id, role } = req.auth;
   const table = subjectType === 'member' ? 'members' : 'users';
   const { data, error } = await supabase.from(table).select('*').eq('id', id).maybeSingle();
   if (error || !data) return res.status(404).json({ error: 'Account not found' });
 
-  const { password_hash, ...safe } = data;
-  return res.json({ profile: safe, role: req.auth.role });
+  const gymName = await getGymName(data.gym_id);
+  const profile = subjectType === 'member' ? buildMemberProfile(data, gymName) : buildUserProfile(data, gymName);
+  return res.json({ profile, role });
 });
 
 export const changePassword = asyncHandler(async (req, res) => {

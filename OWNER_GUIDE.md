@@ -105,14 +105,16 @@ manages members within their own gym.
 **Login Details** next to any member (or open the member and see the
 "Login Details" section) to:
 - View their Member ID and whether their account is Active or Disabled
-- **Change Password** — type a specific new password for them
-- **Reset Password** — generate a new random password instantly
+- **Change Password** — opens a small form where you type the new
+  password twice (to catch typos) and can click "Show password" to
+  double-check it before saving. Their Member ID never changes.
 - **Enable Account** / **Disable Account** — allow or block their login
 
 Passwords are never stored in a way anyone (including the system) can look
-up later — that's a standard, important security practice. Whenever you
-need to hand a member their password again, use Change Password or Reset
-Password; the new password is shown once right after.
+up later — that's a standard, important security practice, and why there
+is no "view current password" option. Whenever a member needs their
+password again, use Change Password to set one you know and hand it to
+them; every password change is recorded in Activity Logs.
 
 ## 10. How to suspend a gym
 

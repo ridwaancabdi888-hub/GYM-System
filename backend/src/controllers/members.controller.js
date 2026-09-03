@@ -175,8 +175,8 @@ export const getMemberQr = asyncHandler(async (req, res) => {
 // Login details a Gym Admin can always see: the Member ID (login username)
 // and account status. The password itself is never stored or returned
 // here — passwords are one-way hashed, so "the current password" isn't
-// something any system can retrieve. Use setMemberPassword/
-// resetMemberPassword to hand the member a known-working password instead.
+// something any system can retrieve. Use setMemberPassword to hand the
+// member a known-working password instead.
 export const getMemberCredentials = asyncHandler(async (req, res) => {
   const { data } = await supabase
     .from('members')
@@ -215,29 +215,4 @@ export const setMemberPassword = asyncHandler(async (req, res) => {
   });
 
   res.json({ username: member.member_code, password: req.body.newPassword });
-});
-
-// Gym Admin generates a fresh random password for the member.
-export const resetMemberPassword = asyncHandler(async (req, res) => {
-  const { data: member } = await supabase
-    .from('members')
-    .select('member_code, full_name')
-    .eq('id', req.params.id)
-    .eq('gym_id', req.gymId)
-    .maybeSingle();
-  if (!member) return res.status(404).json({ error: 'Member not found' });
-
-  const tempPassword = generateTempPassword();
-  const password_hash = await hashPassword(tempPassword);
-  await supabase.from('members').update({ password_hash }).eq('id', req.params.id);
-
-  await logActivity({
-    gymId: req.gymId,
-    userId: req.auth.id,
-    action: `Reset password for member ${member.full_name} (${member.member_code})`,
-    relatedTable: 'members',
-    relatedId: req.params.id,
-  });
-
-  res.json({ username: member.member_code, password: tempPassword });
 });

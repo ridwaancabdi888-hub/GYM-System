@@ -65,6 +65,25 @@ export const checkIn = asyncHandler(async (req, res) => {
   }
 
   const now = new Date();
+  const today = now.toISOString().slice(0, 10);
+
+  const { data: existingRows } = await supabase
+    .from('attendance')
+    .select('id, check_in_time')
+    .eq('gym_id', req.gymId)
+    .eq('member_id', member.id)
+    .eq('check_in_date', today)
+    .order('check_in_time', { ascending: true })
+    .limit(1);
+
+  if (existingRows && existingRows.length > 0) {
+    return res.status(409).json({
+      error: `${member.full_name} already checked in today at ${existingRows[0].check_in_time.slice(0, 5)}`,
+      alreadyCheckedIn: true,
+      member,
+    });
+  }
+
   const { data: record, error } = await supabase
     .from('attendance')
     .insert({

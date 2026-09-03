@@ -57,8 +57,9 @@ function buildNav(role, permissions) {
 }
 
 export default function Sidebar({ open, onClose }) {
-  const { role, permissions } = useAuth();
+  const { role, permissions, profile } = useAuth();
   const items = buildNav(role, permissions);
+  const brandName = role === 'super_admin' ? 'Gym SaaS' : profile?.gymName || 'Gym SaaS';
 
   return (
     <>
@@ -68,8 +69,9 @@ export default function Sidebar({ open, onClose }) {
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="flex h-16 items-center gap-2 px-5 text-lg font-semibold text-white">
-          <span className="text-brand-400">●</span> Gym SaaS
+        <div className="flex h-16 items-center gap-2 px-5 text-lg font-semibold text-white" title={brandName}>
+          <span className="flex-shrink-0 text-brand-400">●</span>
+          <span className="truncate">{brandName}</span>
         </div>
         <nav className="flex flex-col gap-1 px-3 py-2">
           {items.map((item) => (
