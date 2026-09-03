@@ -1,13 +1,11 @@
 import { supabase } from '../config/supabase.js';
 
-function prefixFromName(name) {
-  const letters = name.replace(/[^a-zA-Z]/g, '').toUpperCase();
-  return (letters.slice(0, 3) || 'GYM');
-}
-
-// Generates a short, human-readable, per-gym-unique member code like "IPF-0007".
-export async function generateMemberCode(gymId, gymName) {
-  const prefix = prefixFromName(gymName);
+// Generates a short, per-gym Member ID like "M001". Each gym has its own
+// independent sequence, so the same code (e.g. "M001") legitimately exists
+// in more than one gym — this is by design, and is why member login
+// resolves identity by trying the code against every gym that has it and
+// checking the password, rather than a single global username lookup.
+export async function generateMemberCode(gymId) {
   const { count, error } = await supabase
     .from('members')
     .select('id', { count: 'exact', head: true })
@@ -16,5 +14,5 @@ export async function generateMemberCode(gymId, gymName) {
   if (error) throw error;
 
   const next = (count || 0) + 1;
-  return `${prefix}-${String(next).padStart(4, '0')}`;
+  return `M${String(next).padStart(3, '0')}`;
 }

@@ -125,6 +125,13 @@ create trigger trg_plans_updated_at before update on membership_plans
 
 -- ----------------------------------------------------------------------------
 -- members (gym members, have their own login)
+--
+-- member_code (e.g. "M001") IS the login identifier — there is no separate
+-- username. Each gym has its own independent sequence starting at M001, so
+-- the same code intentionally exists in more than one gym; login resolves
+-- identity by matching the code against every gym that has it and checking
+-- the password (see backend/src/controllers/auth.controller.js), not by a
+-- single global unique lookup.
 -- ----------------------------------------------------------------------------
 create table if not exists members (
   id uuid primary key default gen_random_uuid(),
@@ -139,7 +146,6 @@ create table if not exists members (
   expiry_date date,
   status member_status not null default 'active',
   photo_url text,
-  username text not null unique,
   password_hash text not null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -147,7 +153,7 @@ create table if not exists members (
 );
 
 create index if not exists idx_members_gym_id on members(gym_id);
-create index if not exists idx_members_username on members(username);
+create index if not exists idx_members_code on members(member_code);
 create index if not exists idx_members_expiry on members(expiry_date);
 
 drop trigger if exists trg_members_updated_at on members;

@@ -5,6 +5,7 @@ import { useToast } from '../../components/Toast.jsx';
 import DataTable from '../../components/DataTable.jsx';
 import Badge from '../../components/Badge.jsx';
 import Modal from '../../components/Modal.jsx';
+import MemberLoginDetails from '../../components/MemberLoginDetails.jsx';
 import { Button, FormField, Input, Select } from '../../components/FormField.jsx';
 
 const emptyForm = { fullName: '', phone: '', gender: 'male', membershipPlanId: '' };
@@ -20,6 +21,7 @@ export default function Members() {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [createdInfo, setCreatedInfo] = useState(null);
+  const [loginMember, setLoginMember] = useState(null);
 
   async function load() {
     setLoading(true);
@@ -52,7 +54,7 @@ export default function Members() {
     try {
       const { data } = await api.post('/members', { ...form, membershipPlanId: form.membershipPlanId || null });
       toast.success(`${data.member.full_name} added`);
-      setCreatedInfo({ username: data.loginUsername, password: data.loginTempPassword, memberCode: data.member.member_code });
+      setCreatedInfo({ memberCode: data.member.member_code, password: data.loginTempPassword });
       load();
     } catch (err) {
       toast.error(apiErrorMessage(err));
@@ -65,6 +67,10 @@ export default function Members() {
     setModalOpen(false);
     setCreatedInfo(null);
     setForm(emptyForm);
+  }
+
+  function handleLoginStatusChange(memberId, newStatus) {
+    setMembers((prev) => prev.map((m) => (m.id === memberId ? { ...m, status: newStatus } : m)));
   }
 
   return (
@@ -102,6 +108,7 @@ export default function Members() {
           { key: 'phone', header: 'Phone', render: (m) => m.phone || '—' },
           { key: 'expiry_date', header: 'Expiry', render: (m) => (m.expiry_date ? new Date(m.expiry_date).toLocaleDateString() : '—') },
           { key: 'status', header: 'Status', render: (m) => <Badge>{m.status}</Badge> },
+          { key: 'actions', header: '', render: (m) => <Button variant="ghost" onClick={() => setLoginMember(m)}>Login Details</Button> },
         ]}
       />
 
@@ -110,8 +117,7 @@ export default function Members() {
           <div>
             <p className="mb-3 text-sm text-slate-600">Give these login details to the member so they can access their account.</p>
             <div className="rounded-lg bg-slate-50 p-4 text-sm">
-              <p><span className="text-slate-500">Member ID:</span> {createdInfo.memberCode}</p>
-              <p><span className="text-slate-500">Username:</span> {createdInfo.username}</p>
+              <p><span className="text-slate-500">Member ID (also their login username):</span> {createdInfo.memberCode}</p>
               <p><span className="text-slate-500">Temporary password:</span> <span className="font-mono font-semibold">{createdInfo.password}</span></p>
             </div>
             <div className="mt-4 flex justify-end">
@@ -147,6 +153,15 @@ export default function Members() {
               <Button type="submit" disabled={saving}>{saving ? 'Adding…' : 'Add member'}</Button>
             </div>
           </form>
+        )}
+      </Modal>
+
+      <Modal open={!!loginMember} onClose={() => setLoginMember(null)} title={loginMember ? `Login Details — ${loginMember.full_name}` : ''}>
+        {loginMember && (
+          <MemberLoginDetails
+            memberId={loginMember.id}
+            onStatusChange={(newStatus) => handleLoginStatusChange(loginMember.id, newStatus)}
+          />
         )}
       </Modal>
     </div>

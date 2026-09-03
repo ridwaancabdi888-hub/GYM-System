@@ -5,6 +5,7 @@ import { useToast } from '../../components/Toast.jsx';
 import Badge from '../../components/Badge.jsx';
 import LoadingSpinner from '../../components/LoadingSpinner.jsx';
 import Modal from '../../components/Modal.jsx';
+import MemberLoginDetails from '../../components/MemberLoginDetails.jsx';
 import { Button, FormField, Input, Select } from '../../components/FormField.jsx';
 
 export default function MemberDetail() {
@@ -60,17 +61,6 @@ export default function MemberDetail() {
     }
   }
 
-  async function toggleStatus() {
-    const nextStatus = member.status === 'inactive' ? 'active' : 'inactive';
-    try {
-      const { data } = await api.patch(`/members/${id}/status`, { status: nextStatus });
-      setMember(data.member);
-      toast.success(`Member is now ${data.member.status}`);
-    } catch (err) {
-      toast.error(apiErrorMessage(err));
-    }
-  }
-
   async function showQr() {
     try {
       const { data } = await api.get(`/members/${id}/qr`);
@@ -112,10 +102,12 @@ export default function MemberDetail() {
         <div className="flex gap-2">
           <Badge>{member.status}</Badge>
           <Button variant="secondary" onClick={showQr}>QR Code</Button>
-          <Button variant={member.status === 'inactive' ? 'primary' : 'danger'} onClick={toggleStatus}>
-            {member.status === 'inactive' ? 'Activate' : 'Deactivate'}
-          </Button>
         </div>
+      </div>
+
+      <div className="mb-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="mb-4 text-sm font-semibold text-slate-800">Login Details</h2>
+        <MemberLoginDetails memberId={id} onStatusChange={(newStatus) => setMember((m) => ({ ...m, status: newStatus }))} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">

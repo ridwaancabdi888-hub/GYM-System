@@ -90,11 +90,29 @@ need to reset a Gym Admin's password instead (e.g. they forgot it):
 ## 9. How members receive accounts
 
 Whenever a Gym Admin or permitted staff member adds a new member (**Members
-→ + Add Member**), the system automatically creates that member's own
-login (a username and a one-time temporary password), shown once on
-screen. Staff hand this to the member so they can log in from their own
-phone and see their own membership status, expiry date, payments, and
-attendance.
+→ + Add Member**), the system automatically assigns them a short **Member
+ID** (e.g. `M001`) and a one-time temporary password, shown once on screen.
+Staff hand these to the member so they can log in from their own phone
+using that Member ID + password, and see their own membership status,
+expiry date, payments, and attendance.
+
+Each gym has its own independent numbering — Gym A's `M001` and Gym B's
+`M001` are two different people. This is expected: the system always knows
+which gym a member belongs to once they log in, and a Gym Admin only ever
+manages members within their own gym.
+
+**Managing a member's login anytime** — from the **Members** page, click
+**Login Details** next to any member (or open the member and see the
+"Login Details" section) to:
+- View their Member ID and whether their account is Active or Disabled
+- **Change Password** — type a specific new password for them
+- **Reset Password** — generate a new random password instantly
+- **Enable Account** / **Disable Account** — allow or block their login
+
+Passwords are never stored in a way anyone (including the system) can look
+up later — that's a standard, important security practice. Whenever you
+need to hand a member their password again, use Change Password or Reset
+Password; the new password is shown once right after.
 
 ## 10. How to suspend a gym
 
@@ -230,10 +248,12 @@ removes the "pauses when idle" limitation.
 
 ## 22. How to troubleshoot common problems
 
-**"Invalid email/username or password" when I know it's correct**
-The account may be disabled, or you're mixing up email (staff/admin) vs.
-username (members). Check with a Gym Admin, or look the account up in
-Supabase's `users` or `members` table (#13).
+**"Invalid email/Member ID or password" when I know it's correct**
+The account may be disabled, or you're mixing up email (for Super
+Admin/Gym Admin/staff) vs. Member ID like `M001` (for members). A Gym
+Admin can check/reset any member's password from **Members → Login
+Details** (#9), or look the account up in Supabase's `users` or `members`
+table (#13).
 
 **A staff member can't see a section they should have access to**
 Ask the Gym Admin to check that staff member's permissions: **Staff → click

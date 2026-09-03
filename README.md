@@ -154,10 +154,14 @@ production.**
 | Gym Admin — Iron Peak Fitness | `admin@ironpeak.demo` | `Admin@123` |
 | Staff (Receptionist) — Iron Peak | `ahmed@ironpeak.demo` | `Staff@123` |
 | Staff (Cashier) — Iron Peak | `ayaan@ironpeak.demo` | `Staff@123` |
-| Member — Iron Peak | `farah.hassan` | `Member@123` |
+| Member — Iron Peak (Hodan Abdi) | `M001` | `Member@123` |
 | Gym Admin — Coastal Strength Club | `admin@coastalstrength.demo` | `Admin@123` |
 | Staff (Manager) — Coastal Strength | `ifrah@coastalstrength.demo` | `Staff@123` |
-| Member — Coastal Strength | `nasra.ali` | `Member@123` |
+| Member — Coastal Strength (Nasra Ali) | `M001` | `Member@123` |
+
+Member IDs (e.g. `M001`) are only unique **within a gym** — each gym has
+its own sequence starting at M001, so the same ID legitimately exists in
+more than one gym. This is by design (see database/schema.sql).
 
 For the full beginner-friendly walkthrough (including where the live site
 is, how to open Supabase, back up the database, and push updates), see

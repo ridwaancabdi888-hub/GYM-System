@@ -6,14 +6,14 @@ import { asyncHandler } from '../middleware/asyncHandler.js';
 
 export const login = asyncHandler(async (req, res) => {
   requireFields(req.body, ['identifier', 'password']);
-  const identifier = String(req.body.identifier).trim().toLowerCase();
+  const rawIdentifier = String(req.body.identifier).trim();
   const { password } = req.body;
 
   // Try staff/admin/super-admin first (by email)
   const { data: user } = await supabase
     .from('users')
     .select('*')
-    .eq('email', identifier)
+    .eq('email', rawIdentifier.toLowerCase())
     .maybeSingle();
 
   if (user) {
@@ -45,16 +45,23 @@ export const login = asyncHandler(async (req, res) => {
     });
   }
 
-  // Fall back to member login (by username)
-  const { data: member } = await supabase
+  // Fall back to member login, by Member ID (member_code, e.g. "M001").
+  // Member IDs are only unique WITHIN a gym — each gym has its own M001,
+  // M002... sequence — so the same code can legitimately match members in
+  // several different gyms. Identity is resolved by checking the password
+  // against every candidate, not by a single unique lookup.
+  const { data: candidates } = await supabase
     .from('members')
     .select('*')
-    .eq('username', identifier)
-    .maybeSingle();
+    .eq('member_code', rawIdentifier.toUpperCase());
 
-  if (member) {
+  for (const member of candidates || []) {
     const ok = await comparePassword(password, member.password_hash);
-    if (!ok) return res.status(401).json({ error: 'Invalid username or password' });
+    if (!ok) continue;
+
+    if (member.status === 'inactive') {
+      return res.status(403).json({ error: 'This account has been disabled. Contact your gym.' });
+    }
 
     const token = signToken({
       subjectType: 'member',
@@ -69,14 +76,13 @@ export const login = asyncHandler(async (req, res) => {
         id: member.id,
         role: 'member',
         fullName: member.full_name,
-        username: member.username,
         gymId: member.gym_id,
         memberCode: member.member_code,
       },
     });
   }
 
-  return res.status(401).json({ error: 'Invalid email/username or password' });
+  return res.status(401).json({ error: 'Invalid email/Member ID or password' });
 });
 
 export const me = asyncHandler(async (req, res) => {

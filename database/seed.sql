@@ -58,17 +58,17 @@ begin
   insert into membership_plans (id, gym_id, name, duration_days, price, status)
   values (gen_random_uuid(), gym_a, 'Yearly', 365, 240.00, 'active') returning id into plan_a_yearly;
 
-  insert into members (id, gym_id, member_code, full_name, phone, gender, join_date, membership_plan_id, start_date, expiry_date, status, username, password_hash)
-  values (gen_random_uuid(), gym_a, 'IPF-0001', 'Farah Hassan', '+252611100001', 'male', current_date - 60, plan_a_monthly, current_date - 10, current_date + 20, 'active', 'farah.hassan', v_member_hash)
+  insert into members (id, gym_id, member_code, full_name, phone, gender, join_date, membership_plan_id, start_date, expiry_date, status, password_hash)
+  values (gen_random_uuid(), gym_a, 'M001', 'Farah Hassan', '+252611100001', 'male', current_date - 60, plan_a_monthly, current_date - 10, current_date + 20, 'active', v_member_hash)
   returning id into m_a1;
-  insert into members (id, gym_id, member_code, full_name, phone, gender, join_date, membership_plan_id, start_date, expiry_date, status, username, password_hash)
-  values (gen_random_uuid(), gym_a, 'IPF-0002', 'Sagal Warsame', '+252611100002', 'female', current_date - 40, plan_a_yearly, current_date - 40, current_date + 325, 'active', 'sagal.warsame', v_member_hash)
+  insert into members (id, gym_id, member_code, full_name, phone, gender, join_date, membership_plan_id, start_date, expiry_date, status, password_hash)
+  values (gen_random_uuid(), gym_a, 'M002', 'Sagal Warsame', '+252611100002', 'female', current_date - 40, plan_a_yearly, current_date - 40, current_date + 325, 'active', v_member_hash)
   returning id into m_a2;
-  insert into members (id, gym_id, member_code, full_name, phone, gender, join_date, membership_plan_id, start_date, expiry_date, status, username, password_hash)
-  values (gen_random_uuid(), gym_a, 'IPF-0003', 'Khalid Nur', '+252611100003', 'male', current_date - 100, plan_a_monthly, current_date - 35, current_date - 5, 'expired', 'khalid.nur', v_member_hash)
+  insert into members (id, gym_id, member_code, full_name, phone, gender, join_date, membership_plan_id, start_date, expiry_date, status, password_hash)
+  values (gen_random_uuid(), gym_a, 'M003', 'Khalid Nur', '+252611100003', 'male', current_date - 100, plan_a_monthly, current_date - 35, current_date - 5, 'expired', v_member_hash)
   returning id into m_a3;
-  insert into members (id, gym_id, member_code, full_name, phone, gender, join_date, membership_plan_id, start_date, expiry_date, status, username, password_hash)
-  values (gen_random_uuid(), gym_a, 'IPF-0004', 'Hodan Abdi', '+252611100004', 'female', current_date - 5, plan_a_monthly, current_date - 5, current_date + 25, 'active', 'hodan.abdi', v_member_hash)
+  insert into members (id, gym_id, member_code, full_name, phone, gender, join_date, membership_plan_id, start_date, expiry_date, status, password_hash)
+  values (gen_random_uuid(), gym_a, 'M004', 'Hodan Abdi', '+252611100004', 'female', current_date - 5, plan_a_monthly, current_date - 5, current_date + 25, 'active', v_member_hash)
   returning id into m_a4;
 
   insert into subscriptions (id, gym_id, member_id, plan_id, start_date, end_date, status)
@@ -100,7 +100,7 @@ begin
     (gym_a, 'New opening hours', 'Starting next week we open at 6 AM instead of 7 AM.', 'published', admin_a);
 
   insert into activity_logs (gym_id, user_id, action, related_table, related_id) values
-    (gym_a, staff_a1, 'Checked in Farah Hassan (IPF-0001)', 'attendance', m_a1),
+    (gym_a, staff_a1, 'Checked in Farah Hassan (M001)', 'attendance', m_a1),
     (gym_a, staff_a2, 'Received $25.00 payment from Farah Hassan', 'payments', m_a1),
     (gym_a, admin_a, 'Created membership plan Yearly', 'membership_plans', plan_a_yearly);
 
@@ -120,14 +120,14 @@ begin
   insert into membership_plans (id, gym_id, name, duration_days, price, status)
   values (gen_random_uuid(), gym_b, 'Monthly', 30, 20.00, 'active') returning id into plan_b_monthly;
 
-  insert into members (id, gym_id, member_code, full_name, phone, gender, join_date, membership_plan_id, start_date, expiry_date, status, username, password_hash)
-  values (gen_random_uuid(), gym_b, 'CSC-0001', 'Nasra Ali', '+252611200001', 'female', current_date - 20, plan_b_monthly, current_date - 20, current_date + 10, 'active', 'nasra.ali', v_member_hash)
+  insert into members (id, gym_id, member_code, full_name, phone, gender, join_date, membership_plan_id, start_date, expiry_date, status, password_hash)
+  values (gen_random_uuid(), gym_b, 'M001', 'Nasra Ali', '+252611200001', 'female', current_date - 20, plan_b_monthly, current_date - 20, current_date + 10, 'active', v_member_hash)
   returning id into m_b1;
-  insert into members (id, gym_id, member_code, full_name, phone, gender, join_date, membership_plan_id, start_date, expiry_date, status, username, password_hash)
-  values (gen_random_uuid(), gym_b, 'CSC-0002', 'Yusuf Omar', '+252611200002', 'male', current_date - 3, plan_b_monthly, current_date - 3, current_date + 27, 'active', 'yusuf.omar', v_member_hash)
+  insert into members (id, gym_id, member_code, full_name, phone, gender, join_date, membership_plan_id, start_date, expiry_date, status, password_hash)
+  values (gen_random_uuid(), gym_b, 'M002', 'Yusuf Omar', '+252611200002', 'male', current_date - 3, plan_b_monthly, current_date - 3, current_date + 27, 'active', v_member_hash)
   returning id into m_b2;
-  insert into members (id, gym_id, member_code, full_name, phone, gender, join_date, membership_plan_id, start_date, expiry_date, status, username, password_hash)
-  values (gen_random_uuid(), gym_b, 'CSC-0003', 'Zahra Said', '+252611200003', 'female', current_date - 50, plan_b_monthly, current_date - 20, current_date - 3, 'expired', 'zahra.said', v_member_hash)
+  insert into members (id, gym_id, member_code, full_name, phone, gender, join_date, membership_plan_id, start_date, expiry_date, status, password_hash)
+  values (gen_random_uuid(), gym_b, 'M003', 'Zahra Said', '+252611200003', 'female', current_date - 50, plan_b_monthly, current_date - 20, current_date - 3, 'expired', v_member_hash)
   returning id into m_b3;
 
   insert into subscriptions (id, gym_id, member_id, plan_id, start_date, end_date, status)
@@ -151,7 +151,7 @@ begin
     (gym_b, 'Training schedule updated', 'New group training sessions start Monday at 6 PM.', 'published', admin_b);
 
   insert into activity_logs (gym_id, user_id, action, related_table, related_id) values
-    (gym_b, staff_b1, 'Checked in Nasra Ali (CSC-0001)', 'attendance', m_b1),
+    (gym_b, staff_b1, 'Checked in Nasra Ali (M001)', 'attendance', m_b1),
     (gym_b, admin_b, 'Added member Yusuf Omar', 'members', m_b2);
 
 end $$;

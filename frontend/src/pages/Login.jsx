@@ -39,12 +39,12 @@ export default function Login() {
         </div>
 
         <form onSubmit={handleSubmit}>
-          <FormField label="Email or Username" required>
+          <FormField label="Email or Member ID" required>
             <Input
               type="text"
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
-              placeholder="you@example.com"
+              placeholder="you@example.com or M001"
               autoComplete="username"
               required
             />

@@ -56,7 +56,7 @@ async function main() {
   check('staff login succeeds', staff.status === 200 && staff.token);
 
   console.log('\nMember login');
-  const member = await login('farah.hassan', 'Member@123');
+  const member = await login('M001', 'Member@123');
   check('member login succeeds', member.status === 200 && member.token);
 
   console.log('\nSuper Admin: list gyms');

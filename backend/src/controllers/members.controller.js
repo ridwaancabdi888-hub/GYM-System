@@ -8,18 +8,13 @@ import { generateMemberQrDataUrl } from '../services/qrcode.js';
 import { syncExpiredMembers } from '../services/memberMaintenance.js';
 import { computeMemberStatus } from '../utils/memberStatus.js';
 
-function usernameFromName(fullName, suffix) {
-  const base = fullName.trim().toLowerCase().replace(/[^a-z\s]/g, '').split(/\s+/).slice(0, 2).join('.');
-  return `${base || 'member'}${suffix}`;
-}
-
 export const listMembers = asyncHandler(async (req, res) => {
   await syncExpiredMembers(req.gymId);
 
   const { search, status, page = 1, pageSize = 20 } = req.query;
   let query = supabase
     .from('members')
-    .select('id, member_code, full_name, phone, gender, join_date, membership_plan_id, start_date, expiry_date, status, photo_url, username, created_at', { count: 'exact' })
+    .select('id, member_code, full_name, phone, gender, join_date, membership_plan_id, start_date, expiry_date, status, photo_url, created_at', { count: 'exact' })
     .eq('gym_id', req.gymId);
 
   if (search) {
@@ -59,8 +54,7 @@ export const createMember = asyncHandler(async (req, res) => {
   requireFields(req.body, ['fullName']);
   const { fullName, phone, gender, membershipPlanId, photoUrl } = req.body;
 
-  const { data: gym } = await supabase.from('gyms').select('name').eq('id', req.gymId).maybeSingle();
-  const memberCode = await generateMemberCode(req.gymId, gym?.name || 'GYM');
+  const memberCode = await generateMemberCode(req.gymId);
 
   let startDate = null;
   let expiryDate = null;
@@ -73,7 +67,6 @@ export const createMember = asyncHandler(async (req, res) => {
     expiryDate = expiry.toISOString().slice(0, 10);
   }
 
-  const username = usernameFromName(fullName, `${req.gymId.replace(/-/g, '').slice(0, 4)}${memberCode.slice(-4)}`);
   const tempPassword = generateTempPassword();
   const password_hash = await hashPassword(tempPassword);
 
@@ -90,7 +83,6 @@ export const createMember = asyncHandler(async (req, res) => {
       expiry_date: expiryDate,
       status: 'active',
       photo_url: photoUrl || null,
-      username,
       password_hash,
     })
     .select()
@@ -111,7 +103,7 @@ export const createMember = asyncHandler(async (req, res) => {
   await logActivity({ gymId: req.gymId, userId: req.auth.id, action: `Added member ${fullName} (${memberCode})`, relatedTable: 'members', relatedId: member.id });
 
   const { password_hash: _, ...safeMember } = member;
-  res.status(201).json({ member: safeMember, loginUsername: username, loginTempPassword: tempPassword });
+  res.status(201).json({ member: safeMember, loginUsername: memberCode, loginTempPassword: tempPassword });
 });
 
 export const updateMember = asyncHandler(async (req, res) => {
@@ -175,4 +167,74 @@ export const getMemberQr = asyncHandler(async (req, res) => {
   if (!data) return res.status(404).json({ error: 'Member not found' });
   const qrDataUrl = await generateMemberQrDataUrl(data.member_code);
   res.json({ qrDataUrl, memberCode: data.member_code });
+});
+
+// Login details a Gym Admin can always see: the Member ID (login username)
+// and account status. The password itself is never stored or returned
+// here — passwords are one-way hashed, so "the current password" isn't
+// something any system can retrieve. Use setMemberPassword/
+// resetMemberPassword to hand the member a known-working password instead.
+export const getMemberCredentials = asyncHandler(async (req, res) => {
+  const { data } = await supabase
+    .from('members')
+    .select('member_code, status')
+    .eq('id', req.params.id)
+    .eq('gym_id', req.gymId)
+    .maybeSingle();
+  if (!data) return res.status(404).json({ error: 'Member not found' });
+  res.json({ username: data.member_code, status: data.status });
+});
+
+// Gym Admin manually sets a specific password for the member.
+export const setMemberPassword = asyncHandler(async (req, res) => {
+  requireFields(req.body, ['newPassword']);
+  if (String(req.body.newPassword).length < 6) {
+    throw new ValidationError('Password must be at least 6 characters');
+  }
+
+  const { data: member } = await supabase
+    .from('members')
+    .select('member_code, full_name')
+    .eq('id', req.params.id)
+    .eq('gym_id', req.gymId)
+    .maybeSingle();
+  if (!member) return res.status(404).json({ error: 'Member not found' });
+
+  const password_hash = await hashPassword(req.body.newPassword);
+  await supabase.from('members').update({ password_hash }).eq('id', req.params.id);
+
+  await logActivity({
+    gymId: req.gymId,
+    userId: req.auth.id,
+    action: `Changed password for member ${member.full_name} (${member.member_code})`,
+    relatedTable: 'members',
+    relatedId: req.params.id,
+  });
+
+  res.json({ username: member.member_code, password: req.body.newPassword });
+});
+
+// Gym Admin generates a fresh random password for the member.
+export const resetMemberPassword = asyncHandler(async (req, res) => {
+  const { data: member } = await supabase
+    .from('members')
+    .select('member_code, full_name')
+    .eq('id', req.params.id)
+    .eq('gym_id', req.gymId)
+    .maybeSingle();
+  if (!member) return res.status(404).json({ error: 'Member not found' });
+
+  const tempPassword = generateTempPassword();
+  const password_hash = await hashPassword(tempPassword);
+  await supabase.from('members').update({ password_hash }).eq('id', req.params.id);
+
+  await logActivity({
+    gymId: req.gymId,
+    userId: req.auth.id,
+    action: `Reset password for member ${member.full_name} (${member.member_code})`,
+    relatedTable: 'members',
+    relatedId: req.params.id,
+  });
+
+  res.json({ username: member.member_code, password: tempPassword });
 });
