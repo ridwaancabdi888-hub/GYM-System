@@ -4,15 +4,15 @@ This is a plain-language guide for you, the owner, written assuming you are
 **not** a developer. Keep this file somewhere safe — it has the links and
 steps you'll need to run the system day-to-day.
 
-> **Note:** A few sections below say `(fill in after deployment)`. Those get
-> filled in once the live website is up and running — this guide will be
-> updated at that point with the real link and confirmed steps.
-
 ---
 
 ## 1. Final live system URL
 
-`(fill in after deployment — this will be your https://your-project.vercel.app address)`
+**https://gym-system-beta.vercel.app/**
+
+This is the one address everyone uses — Super Admin, every Gym Admin,
+every staff member, and every member. The system shows each person only
+what they're allowed to see based on who they log in as.
 
 ## 2. Super Admin login
 
@@ -107,8 +107,10 @@ from the same screen (**Activate Gym**).
 
 ## 11. Where the online database is hosted
 
-Your data lives in **Supabase** (a hosted PostgreSQL database), at:
-`(fill in after deployment — your Supabase project URL)`
+Your data lives in **Supabase** (a hosted PostgreSQL database). Open
+[supabase.com](https://supabase.com), log in, and select your `gym-system`
+project — its Project URL is visible under Project Settings → API (see #12
+below for how to get there).
 
 ## 12. How I open Supabase
 
@@ -255,3 +257,13 @@ this version of the system.
 Reports are simple sums of the `payments` table for the selected period —
 double check no test/demo payments were left in by mistake (see #15 to look
 them up directly).
+
+**The site suddenly shows a "Vercel Security Checkpoint" page instead of
+your app**
+This is Vercel's automatic protection against unusual traffic spikes (e.g.
+a burst of automated requests, or an actual attack) — it's not something
+you turn on, and it isn't a bug in the app. It normally clears itself
+after a short time. You can check its status any time at **Vercel →
+your project → Firewall → Traffic**, where "System Mitigations" will show
+as Active/Inactive. There's nothing to fix in the code when this happens —
+just wait a few minutes and try again.

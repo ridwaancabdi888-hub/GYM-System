@@ -5,6 +5,8 @@ platform. Four access levels — **Super Admin**, **Gym Admin**, **Staff**,
 and **Member** — each see only what they're supposed to, and every gym's
 data is fully isolated by `gym_id`.
 
+**Live:** https://gym-system-beta.vercel.app/ (demo accounts below)
+
 ## Features
 
 - **Super Admin** — create gyms and their first Gym Admin, view every gym,
