@@ -116,6 +116,18 @@ is no "view current password" option. Whenever a member needs their
 password again, use Change Password to set one you know and hand it to
 them; every password change is recorded in Activity Logs.
 
+### How members track progress photos
+
+1. The member logs in and opens their dashboard.
+2. Under **Progress Photos**, they click **+ Upload Photo**, choose a JPG,
+   PNG, or WEBP image, label it **Before**, **Progress**, or **After**, and
+   optionally add a note.
+3. After at least two photos exist, they click **Compare Before / After**,
+   select any two photos, then choose **View Comparison**.
+4. A member can open, download, or permanently delete their own photos.
+   Gym Admin can view a member's gallery from that member's profile, but
+   cannot edit, download, or delete it.
+
 ## 10. How to suspend a gym
 
 1. Log in as Super Admin.
