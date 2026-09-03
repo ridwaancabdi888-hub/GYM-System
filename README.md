@@ -130,13 +130,13 @@ Set up the database once, in the Supabase Dashboard → SQL Editor:
 
 This repo deploys as **one Vercel project**: the React app builds to static
 files (`frontend/dist`, via `buildCommand`/`outputDirectory` in
-`vercel.json`), and the Express app is wrapped (`api/[...path].mjs` at the
-repo root, via `serverless-http`) as a single catch-all Vercel Serverless
-Function — Vercel's built-in `/api` convention automatically routes every
-`/api/*` request to it, and a SPA rewrite sends everything else to
-`index.html` so client-side routing works. Set the backend env vars above
-directly in the Vercel Project Settings — there is nothing to run manually
-after a `git push`.
+`vercel.json`). Vercel deploys `api/index.mjs` as the Serverless Function
+at `/api`; that file exports the Express app directly, with no adapter.
+The `/api/(.*)` rewrite sends every API sub-path to that function while
+preserving the original request path, and the SPA rewrite sends everything
+else to `index.html` so client-side routing works. Set the backend env vars
+above directly in the Vercel Project Settings — there is nothing to run
+manually after a `git push`.
 
 ## User Roles
 
