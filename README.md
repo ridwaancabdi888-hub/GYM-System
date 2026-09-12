@@ -87,7 +87,7 @@ Prerequisites: Node.js 20+, a free Supabase account, `git`.
 
 ```bash
 git clone <your-repo-url>
-cd GYM.System
+cd GYM-System
 
 # Backend
 cd backend
