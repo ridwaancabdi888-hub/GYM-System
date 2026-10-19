@@ -156,9 +156,9 @@ export default function Payments() {
 
       <Modal open={modalOpen} onClose={closeModal} title="Record a payment">
         <form onSubmit={handleSubmit}>
-          <FormField label="Member" required>
+          <FormField id="payment-member" label="Member" required>
             {selectedMember ? (
-              <div className="flex items-center justify-between rounded-lg border border-slate-300 px-3 py-2 text-sm">
+              <div id="payment-member" role="group" className="flex items-center justify-between rounded-lg border border-slate-300 px-3 py-2 text-sm">
                 <span>{selectedMember.full_name} ({selectedMember.member_code})</span>
                 <button type="button" className="text-xs text-brand-700 hover:underline" onClick={() => setSelectedMember(null)}>Change</button>
               </div>

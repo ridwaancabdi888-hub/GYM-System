@@ -198,8 +198,9 @@ export default function ProgressPhotos({ listUrl, uploadUrl, deleteUrl, download
 
       <Modal open={uploadOpen} onClose={() => setUploadOpen(false)} title="Upload Progress Photo">
         <form onSubmit={handleUpload}>
-          <FormField label="Photo" required>
+          <FormField id="progress-photo-file" label="Photo" required>
             <input
+              id="progress-photo-file"
               type="file"
               accept={ACCEPTED_TYPES}
               required

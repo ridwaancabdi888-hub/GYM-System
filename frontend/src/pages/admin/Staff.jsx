@@ -170,8 +170,9 @@ export default function Staff() {
                 <option value="Other">Other</option>
               </Select>
             </FormField>
-            <FormField label="Access permissions">
-              <div className="grid grid-cols-2 gap-2">
+            <fieldset className="mb-4">
+              <legend className="mb-1 text-sm font-medium text-slate-700">Access permissions</legend>
+              <div className="grid grid-cols-2 gap-2" role="group">
                 {MODULES.map((m) => (
                   <label key={m.key} className="flex items-center gap-2 text-sm text-slate-700">
                     <input type="checkbox" checked={!!form.permissions[m.key]} onChange={() => togglePermission(m.key)} />
@@ -179,7 +180,7 @@ export default function Staff() {
                   </label>
                 ))}
               </div>
-            </FormField>
+            </fieldset>
             <div className="mt-4 flex justify-end gap-2">
               <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>Cancel</Button>
               <Button type="submit" disabled={saving}>{saving ? 'Saving…' : editing ? 'Save changes' : 'Add staff'}</Button>
