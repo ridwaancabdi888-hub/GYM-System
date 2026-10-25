@@ -3,6 +3,7 @@ import api, { apiErrorMessage } from '../../services/api.js';
 import { useToast } from '../../components/Toast.jsx';
 import DataTable from '../../components/DataTable.jsx';
 import { Button, Input } from '../../components/FormField.jsx';
+import { createLatestRequestGuard, memberLookupStatus } from '../../utils/latestRequest.js';
 
 const SCAN_COOLDOWN_MS = 2000;
 const MEMBER_CODE_PATTERN = /^M\d+$/i;
@@ -13,11 +14,16 @@ export default function Attendance() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [options, setOptions] = useState([]);
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupFailed, setLookupFailed] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scanResult, setScanResult] = useState(null);
   const scannerRef = useRef(null);
   const lastScanRef = useRef({ code: null, at: 0 });
+  const lookupRequestRef = useRef(createLatestRequestGuard());
   const scannerDivId = 'qr-scanner';
+  const searchInputId = 'attendance-member-search';
+  const searchStatusId = 'attendance-member-search-status';
 
   async function load() {
     setLoading(true);
@@ -37,14 +43,40 @@ export default function Attendance() {
   }, []);
 
   useEffect(() => {
-    if (!search) {
+    const query = search.trim();
+    if (!query) {
+      lookupRequestRef.current.invalidate();
       setOptions([]);
+      setLookupLoading(false);
+      setLookupFailed(false);
       return;
     }
-    const t = setTimeout(() => {
-      api.get('/attendance/member-lookup', { params: { search } }).then(({ data }) => setOptions(data.members));
+
+    const isCurrent = lookupRequestRef.current.next();
+    setOptions([]);
+    setLookupLoading(true);
+    setLookupFailed(false);
+    const timer = setTimeout(async () => {
+      try {
+        const { data } = await api.get('/attendance/member-lookup', { params: { search: query } });
+        if (isCurrent()) setOptions(data.members);
+      } catch (err) {
+        if (isCurrent()) {
+          setOptions([]);
+          setLookupFailed(true);
+          toast.error(apiErrorMessage(err));
+        }
+      } finally {
+        if (isCurrent()) setLookupLoading(false);
+      }
     }, 250);
-    return () => clearTimeout(t);
+
+    return () => {
+      clearTimeout(timer);
+      lookupRequestRef.current.invalidate();
+    };
+    // toast is provided by a stable context provider for the lifetime of this page.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
 
   // Manual search-based check-in (unrelated to the camera) keeps using toasts.
@@ -117,6 +149,13 @@ export default function Attendance() {
     setScannerOpen((s) => !s);
   }
 
+  const lookupStatus = memberLookupStatus({
+    query: search,
+    loading: lookupLoading,
+    failed: lookupFailed,
+    resultCount: options.length,
+  });
+
   useEffect(() => {
     if (!scannerOpen) return;
     let html5QrCode;
@@ -174,6 +213,7 @@ export default function Attendance() {
 
             {scanResult && (
               <div
+                role={scanResult.tone === 'error' ? 'alert' : 'status'}
                 className={`mt-3 rounded-lg border p-3 text-sm ${
                   scanResult.tone === 'success'
                     ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
@@ -193,8 +233,21 @@ export default function Attendance() {
             )}
           </div>
         )}
-        <p className="mb-2 text-sm font-medium text-slate-700">Search by name, member ID, or phone</p>
-        <Input placeholder="Start typing…" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-sm" />
+        <label htmlFor={searchInputId} className="mb-2 block text-sm font-medium text-slate-700">
+          Search by name, member ID, or phone
+        </label>
+        <Input
+          id={searchInputId}
+          placeholder="Start typing…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          aria-describedby={searchStatusId}
+          aria-busy={lookupLoading}
+          className="max-w-sm"
+        />
+        <p id={searchStatusId} role="status" aria-live="polite" className="mt-2 min-h-5 text-xs text-slate-500">
+          {lookupStatus}
+        </p>
         {options.length > 0 && (
           <div className="mt-2 max-w-sm divide-y divide-slate-100 rounded-lg border border-slate-200">
             {options.map((m) => (
