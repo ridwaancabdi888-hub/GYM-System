@@ -8,16 +8,20 @@ const ROLE_LABELS = {
   member: 'Member',
 };
 
-export default function Topbar({ onMenuClick }) {
+export default function Topbar({ onMenuClick, menuButtonRef, menuOpen, menuControls }) {
   const { profile, role, logout } = useAuth();
   const navigate = useNavigate();
 
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6">
       <button
+        ref={menuButtonRef}
+        type="button"
         onClick={onMenuClick}
         className="rounded-md p-2 text-slate-500 hover:bg-slate-100 lg:hidden"
         aria-label="Open menu"
+        aria-expanded={menuOpen}
+        aria-controls={menuControls}
       >
         ☰
       </button>

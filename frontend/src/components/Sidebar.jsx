@@ -56,15 +56,31 @@ function buildNav(role, permissions) {
   return [];
 }
 
-export default function Sidebar({ open, onClose }) {
+export default function Sidebar({ open, isDesktop, onClose, sidebarRef, sidebarId }) {
   const { role, permissions, profile } = useAuth();
   const items = buildNav(role, permissions);
   const brandName = role === 'super_admin' ? 'Gym SaaS' : profile?.gymName || 'Gym SaaS';
+  const interactive = open || isDesktop;
 
   return (
     <>
-      {open && <div className="fixed inset-0 z-20 bg-slate-900/40 lg:hidden" onClick={onClose} />}
+      {open && (
+        <button
+          type="button"
+          aria-label="Close navigation menu"
+          className="fixed inset-0 z-20 bg-slate-900/40 lg:hidden"
+          onClick={onClose}
+        />
+      )}
       <aside
+        ref={sidebarRef}
+        id={sidebarId}
+        tabIndex={-1}
+        role={open && !isDesktop ? 'dialog' : undefined}
+        aria-modal={open && !isDesktop ? 'true' : undefined}
+        aria-label="Primary navigation"
+        aria-hidden={interactive ? undefined : 'true'}
+        inert={interactive ? undefined : ''}
         className={`fixed inset-y-0 left-0 z-30 w-64 transform bg-slate-900 text-slate-200 transition-transform lg:static lg:translate-x-0 ${
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
