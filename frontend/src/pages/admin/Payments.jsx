@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import api, { apiErrorMessage } from '../../services/api.js';
 import { useToast } from '../../components/Toast.jsx';
 import DataTable from '../../components/DataTable.jsx';
@@ -6,6 +6,7 @@ import Badge from '../../components/Badge.jsx';
 import Modal from '../../components/Modal.jsx';
 import { Button, FormField, Input, Select } from '../../components/FormField.jsx';
 import { paymentStatusLabel } from '../../utils/paymentStatus.js';
+import { createLatestRequestGuard, memberLookupStatus } from '../../utils/latestRequest.js';
 
 const METHODS = [
   { value: 'cash', label: 'Cash' },
@@ -13,6 +14,9 @@ const METHODS = [
   { value: 'edahab', label: 'eDahab' },
   { value: 'other', label: 'Other' },
 ];
+
+const MEMBER_INPUT_ID = 'payment-member';
+const MEMBER_STATUS_ID = 'payment-member-status';
 
 export default function Payments() {
   const toast = useToast();
@@ -23,6 +27,9 @@ export default function Payments() {
   const [modalOpen, setModalOpen] = useState(false);
   const [memberSearch, setMemberSearch] = useState('');
   const [memberOptions, setMemberOptions] = useState([]);
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupFailed, setLookupFailed] = useState(false);
+  const lookupRequestRef = useRef(createLatestRequestGuard());
   const [selectedMember, setSelectedMember] = useState(null);
   const [amount, setAmount] = useState('');
   const [method, setMethod] = useState('cash');
@@ -60,16 +67,65 @@ export default function Payments() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Member lookup: only the newest search may update the list, so a slow
+  // response for "ab" can never overwrite the results for "abdi". Failures are
+  // surfaced instead of silently leaving an empty list.
   useEffect(() => {
-    if (!memberSearch) {
+    const query = memberSearch.trim();
+    if (!query || selectedMember) {
+      lookupRequestRef.current.invalidate();
       setMemberOptions([]);
-      return;
+      setLookupLoading(false);
+      setLookupFailed(false);
+      return undefined;
     }
-    const t = setTimeout(() => {
-      api.get('/payments/member-lookup', { params: { search: memberSearch } }).then(({ data }) => setMemberOptions(data.members));
+
+    const isCurrent = lookupRequestRef.current.next();
+    setMemberOptions([]);
+    setLookupLoading(true);
+    setLookupFailed(false);
+    const timer = setTimeout(async () => {
+      try {
+        const { data } = await api.get('/payments/member-lookup', { params: { search: query } });
+        if (isCurrent()) setMemberOptions(data.members);
+      } catch (err) {
+        if (isCurrent()) {
+          setMemberOptions([]);
+          setLookupFailed(true);
+          toast.error(apiErrorMessage(err));
+        }
+      } finally {
+        if (isCurrent()) setLookupLoading(false);
+      }
     }, 250);
-    return () => clearTimeout(t);
-  }, [memberSearch]);
+
+    return () => {
+      clearTimeout(timer);
+      lookupRequestRef.current.invalidate();
+    };
+    // toast is provided by a stable context provider for the lifetime of this page.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [memberSearch, selectedMember]);
+
+  function selectMember(member) {
+    setSelectedMember(member);
+    setMemberSearch('');
+    setMemberOptions([]);
+  }
+
+  function changeMember() {
+    setSelectedMember(null);
+    setMemberSearch('');
+    // Return focus to the search box so keyboard users can pick again straight away.
+    requestAnimationFrame(() => document.getElementById(MEMBER_INPUT_ID)?.focus());
+  }
+
+  const lookupStatus = memberLookupStatus({
+    query: memberSearch,
+    loading: lookupLoading,
+    failed: lookupFailed,
+    resultCount: memberOptions.length,
+  });
 
   function closeModal() {
     setModalOpen(false);
@@ -158,26 +214,40 @@ export default function Payments() {
 
       <Modal open={modalOpen} onClose={closeModal} title="Record a payment">
         <form onSubmit={handleSubmit}>
-          <FormField id="payment-member" label="Member" required>
+          <FormField id={MEMBER_INPUT_ID} label="Member" required>
             {selectedMember ? (
-              <div id="payment-member" role="group" className="flex items-center justify-between rounded-lg border border-slate-300 px-3 py-2 text-sm">
+              <div id={MEMBER_INPUT_ID} role="group" className="flex items-center justify-between rounded-lg border border-slate-300 px-3 py-2 text-sm">
                 <span>{selectedMember.full_name} ({selectedMember.member_code})</span>
-                <button type="button" className="text-xs text-brand-700 hover:underline" onClick={() => setSelectedMember(null)}>Change</button>
+                <button
+                  type="button"
+                  className="text-xs text-brand-700 hover:underline"
+                  onClick={changeMember}
+                  aria-label={`Change member (currently ${selectedMember.full_name})`}
+                >
+                  Change
+                </button>
               </div>
             ) : (
               <div>
-                <Input placeholder="Search by name, member ID, or phone…" value={memberSearch} onChange={(e) => setMemberSearch(e.target.value)} />
+                <Input
+                  placeholder="Search by name, member ID, or phone…"
+                  value={memberSearch}
+                  onChange={(e) => setMemberSearch(e.target.value)}
+                  aria-describedby={MEMBER_STATUS_ID}
+                  aria-busy={lookupLoading}
+                  autoComplete="off"
+                />
+                <p id={MEMBER_STATUS_ID} role="status" aria-live="polite" className="mt-1 min-h-4 text-xs text-slate-500">
+                  {lookupStatus}
+                </p>
                 {memberOptions.length > 0 && (
                   <div className="mt-1 max-h-40 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-sm">
                     {memberOptions.map((m) => (
                       <button
                         type="button"
                         key={m.id}
-                        onClick={() => {
-                          setSelectedMember(m);
-                          setMemberOptions([]);
-                        }}
-                        className="block w-full px-3 py-2 text-left text-sm hover:bg-slate-50"
+                        onClick={() => selectMember(m)}
+                        className="block w-full px-3 py-2 text-left text-sm hover:bg-slate-50 focus:bg-slate-50"
                       >
                         {m.full_name} <span className="text-slate-400">({m.member_code})</span>
                       </button>
