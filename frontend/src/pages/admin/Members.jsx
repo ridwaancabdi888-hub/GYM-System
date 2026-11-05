@@ -99,6 +99,7 @@ export default function Members() {
       </div>
 
       <DataTable
+        caption="Gym members"
         loading={loading}
         rows={members}
         emptyTitle="No members found"

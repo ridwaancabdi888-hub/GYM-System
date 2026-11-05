@@ -21,6 +21,7 @@ export default function MemberPayments() {
     <div>
       <h1 className="mb-6 text-xl font-semibold text-slate-900">My Payment History</h1>
       <DataTable
+        caption="My payment history"
         loading={loading}
         rows={payments}
         emptyTitle="No payments yet"

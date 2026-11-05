@@ -118,6 +118,7 @@ export default function Staff() {
       </div>
 
       <DataTable
+        caption="Staff accounts"
         loading={loading}
         rows={staff}
         emptyTitle="No staff accounts yet"

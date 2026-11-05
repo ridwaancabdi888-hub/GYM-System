@@ -124,6 +124,7 @@ export default function Payments() {
       </p>
       <div className="mb-8">
         <DataTable
+          caption="Current membership payment status"
           loading={statusLoading}
           rows={membershipStatus}
           emptyTitle="No memberships yet"
@@ -141,6 +142,7 @@ export default function Payments() {
 
       <h2 className="mb-3 text-sm font-semibold text-slate-800">Payment History</h2>
       <DataTable
+        caption="Payment history"
         loading={loading}
         rows={payments}
         emptyTitle="No payments recorded yet"

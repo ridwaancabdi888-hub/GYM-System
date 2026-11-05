@@ -41,6 +41,7 @@ export default function ActivityLogs() {
       </div>
 
       <DataTable
+        caption="Staff activity log"
         loading={loading}
         rows={logs}
         emptyTitle="No activity recorded yet"

@@ -63,10 +63,11 @@ export default function Reports() {
           <p className="text-sm text-slate-500">No payments in this period.</p>
         ) : (
           <table className="min-w-full text-sm">
+            <caption className="sr-only">Membership income by period</caption>
             <thead>
               <tr className="text-left text-xs font-semibold uppercase text-slate-500">
-                <th className="py-2 pr-4">Period</th>
-                <th className="py-2 pr-4">Total Income</th>
+                <th scope="col" className="py-2 pr-4">Period</th>
+                <th scope="col" className="py-2 pr-4">Total Income</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -88,10 +89,11 @@ export default function Reports() {
             <p className="text-sm text-slate-500">No staff activity recorded yet.</p>
           ) : (
             <table className="min-w-full text-sm">
+              <caption className="sr-only">Staff activity totals</caption>
               <thead>
                 <tr className="text-left text-xs font-semibold uppercase text-slate-500">
-                  <th className="py-2 pr-4">Staff Member</th>
-                  <th className="py-2 pr-4">Actions Logged</th>
+                  <th scope="col" className="py-2 pr-4">Staff Member</th>
+                  <th scope="col" className="py-2 pr-4">Actions Logged</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">

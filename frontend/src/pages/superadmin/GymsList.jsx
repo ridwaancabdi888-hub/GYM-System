@@ -68,6 +68,7 @@ export default function GymsList() {
       </div>
 
       <DataTable
+        caption="Gyms"
         loading={loading}
         rows={gyms}
         emptyTitle="No gyms yet — create the first one"

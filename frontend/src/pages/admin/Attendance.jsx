@@ -262,6 +262,7 @@ export default function Attendance() {
 
       <h2 className="mb-3 text-sm font-semibold text-slate-800">Today's Check-ins</h2>
       <DataTable
+        caption="Today's check-ins"
         loading={loading}
         rows={records}
         emptyTitle="No check-ins yet today"

@@ -77,6 +77,7 @@ export default function MembershipPlans() {
       </div>
 
       <DataTable
+        caption="Membership plans"
         loading={loading}
         rows={plans}
         emptyTitle="No membership plans yet"

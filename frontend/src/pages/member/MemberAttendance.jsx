@@ -21,6 +21,7 @@ export default function MemberAttendance() {
     <div>
       <h1 className="mb-6 text-xl font-semibold text-slate-900">My Attendance History</h1>
       <DataTable
+        caption="My attendance history"
         loading={loading}
         rows={attendance}
         emptyTitle="No check-ins yet"
