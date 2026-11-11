@@ -3,7 +3,14 @@ import { describe, it } from 'node:test';
 
 import { computeMemberStatus } from '../src/utils/memberStatus.js';
 import { computePaymentStatus } from '../src/utils/paymentStatus.js';
-import { isValidEmail, requireFields, ValidationError } from '../src/utils/validate.js';
+import {
+  isValidEmail,
+  normalizeOptionalText,
+  normalizeRequiredText,
+  requireAllowedValue,
+  requireFields,
+  ValidationError,
+} from '../src/utils/validate.js';
 
 const isoDate = (offsetDays = 0) => {
   const date = new Date();
@@ -69,5 +76,26 @@ describe('validation helpers', () => {
     assert.equal(isValidEmail('admin @gym.example'), false);
     assert.equal(isValidEmail('admin@gym'), false);
     assert.equal(isValidEmail('gym.example'), false);
+  });
+
+  it('normalizes required text and rejects blank or non-text values', () => {
+    assert.equal(normalizeRequiredText('  Amina Yusuf  ', 'fullName'), 'Amina Yusuf');
+    assert.throws(() => normalizeRequiredText('   ', 'fullName'), /fullName must be non-empty text/);
+    assert.throws(() => normalizeRequiredText(42, 'fullName'), /fullName must be non-empty text/);
+  });
+
+  it('normalizes optional text without changing omitted or null values', () => {
+    assert.equal(normalizeOptionalText(undefined, 'phone'), undefined);
+    assert.equal(normalizeOptionalText(null, 'phone'), null);
+    assert.equal(normalizeOptionalText('  +252 63 1234567  ', 'phone'), '+252 63 1234567');
+    assert.equal(normalizeOptionalText('   ', 'phone'), null);
+    assert.throws(() => normalizeOptionalText({ number: '123' }, 'phone'), /phone must be text/);
+  });
+
+  it('accepts only configured values while supporting optional fields', () => {
+    const genders = ['male', 'female'];
+    assert.equal(requireAllowedValue('female', 'gender', genders), 'female');
+    assert.equal(requireAllowedValue(undefined, 'gender', genders, { optional: true }), undefined);
+    assert.throws(() => requireAllowedValue('unknown', 'gender', genders), /gender must be one of: male, female/);
   });
 });

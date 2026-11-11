@@ -1,6 +1,12 @@
 import { supabase } from '../config/supabase.js';
 import { hashPassword, generateTempPassword } from '../utils/password.js';
-import { requireFields, ValidationError } from '../utils/validate.js';
+import {
+  normalizeOptionalText,
+  normalizeRequiredText,
+  requireAllowedValue,
+  requireFields,
+  ValidationError,
+} from '../utils/validate.js';
 import { asyncHandler } from '../middleware/asyncHandler.js';
 import { logActivity } from '../services/activityLogger.js';
 import { generateMemberCode } from '../services/memberCode.js';
@@ -8,6 +14,8 @@ import { generateMemberQrDataUrl } from '../services/qrcode.js';
 import { syncExpiredMembers } from '../services/memberMaintenance.js';
 import { computeMemberStatus } from '../utils/memberStatus.js';
 import { getSignedViewUrls } from '../services/progressPhotoStorage.js';
+
+const MEMBER_GENDERS = ['male', 'female'];
 
 export const listMembers = asyncHandler(async (req, res) => {
   await syncExpiredMembers(req.gymId);
@@ -52,8 +60,11 @@ export const getMember = asyncHandler(async (req, res) => {
 });
 
 export const createMember = asyncHandler(async (req, res) => {
-  requireFields(req.body, ['fullName']);
-  const { fullName, phone, gender, membershipPlanId, photoUrl } = req.body;
+  const fullName = normalizeRequiredText(req.body.fullName, 'fullName');
+  const phone = normalizeOptionalText(req.body.phone, 'phone');
+  const photoUrl = normalizeOptionalText(req.body.photoUrl, 'photoUrl');
+  const gender = requireAllowedValue(req.body.gender, 'gender', MEMBER_GENDERS, { optional: true });
+  const { membershipPlanId } = req.body;
 
   const memberCode = await generateMemberCode(req.gymId);
 
@@ -113,10 +124,13 @@ export const createMember = asyncHandler(async (req, res) => {
 export const updateMember = asyncHandler(async (req, res) => {
   const { fullName, phone, gender, photoUrl } = req.body;
   const update = {};
-  if (fullName !== undefined) update.full_name = fullName;
-  if (phone !== undefined) update.phone = phone;
-  if (gender !== undefined) update.gender = gender;
-  if (photoUrl !== undefined) update.photo_url = photoUrl;
+  if (fullName !== undefined) update.full_name = normalizeRequiredText(fullName, 'fullName');
+  if (phone !== undefined) update.phone = normalizeOptionalText(phone, 'phone');
+  if (gender !== undefined) update.gender = requireAllowedValue(gender, 'gender', MEMBER_GENDERS);
+  if (photoUrl !== undefined) update.photo_url = normalizeOptionalText(photoUrl, 'photoUrl');
+  if (Object.keys(update).length === 0) {
+    throw new ValidationError('At least one member field must be provided');
+  }
 
   const { data, error } = await supabase
     .from('members')

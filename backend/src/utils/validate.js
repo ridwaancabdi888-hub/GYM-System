@@ -16,6 +16,30 @@ export function requireFields(body, fields) {
   }
 }
 
+export function normalizeRequiredText(value, field) {
+  if (typeof value !== 'string' || value.trim() === '') {
+    throw new ValidationError(`${field} must be non-empty text`);
+  }
+  return value.trim();
+}
+
+export function normalizeOptionalText(value, field) {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  if (typeof value !== 'string') {
+    throw new ValidationError(`${field} must be text`);
+  }
+  return value.trim() || null;
+}
+
+export function requireAllowedValue(value, field, allowed, { optional = false } = {}) {
+  if (optional && (value === undefined || value === null || value === '')) return value;
+  if (!allowed.includes(value)) {
+    throw new ValidationError(`${field} must be one of: ${allowed.join(', ')}`);
+  }
+  return value;
+}
+
 export function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
