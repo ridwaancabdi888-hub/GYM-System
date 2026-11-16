@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 
 const ToastContext = createContext(null);
 
@@ -6,16 +6,25 @@ let idCounter = 0;
 
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
+  const timers = useRef(new Map());
 
   const remove = useCallback((id) => {
+    const timer = timers.current.get(id);
+    if (timer) clearTimeout(timer);
+    timers.current.delete(id);
     setToasts((t) => t.filter((x) => x.id !== id));
+  }, []);
+
+  useEffect(() => () => {
+    timers.current.forEach((timer) => clearTimeout(timer));
+    timers.current.clear();
   }, []);
 
   const push = useCallback(
     (message, type = 'success') => {
       const id = ++idCounter;
       setToasts((t) => [...t, { id, message, type }]);
-      setTimeout(() => remove(id), 4000);
+      timers.current.set(id, setTimeout(() => remove(id), 4000));
     },
     [remove]
   );
@@ -37,11 +46,20 @@ export function ToastProvider({ children }) {
           <div
             key={t.id}
             role={t.type === 'error' ? 'alert' : 'status'}
-            className={`rounded-lg px-4 py-3 shadow-lg text-sm font-medium text-white ${
+            aria-atomic="true"
+            className={`flex items-start gap-3 rounded-lg px-4 py-3 shadow-lg text-sm font-medium text-white ${
               t.type === 'success' ? 'bg-emerald-600' : t.type === 'error' ? 'bg-red-600' : 'bg-slate-800'
             }`}
           >
-            {t.message}
+            <span className="min-w-0 flex-1">{t.message}</span>
+            <button
+              type="button"
+              onClick={() => remove(t.id)}
+              aria-label={`Dismiss ${t.type} notification`}
+              className="-mr-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded text-lg leading-none text-white/80 hover:bg-white/15 hover:text-white focus:outline-none focus:ring-2 focus:ring-white"
+            >
+              <span aria-hidden="true">×</span>
+            </button>
           </div>
         ))}
       </div>
